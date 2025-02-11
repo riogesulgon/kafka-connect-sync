@@ -29,3 +29,22 @@ postgres-data/
 # Temporary files
 *.tmp
 *~
+
+# Build artifacts
+dist/
+build/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+
+# Custom plugins directory
+custom-plugins/
