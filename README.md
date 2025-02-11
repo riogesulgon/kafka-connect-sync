@@ -15,6 +15,7 @@ This project demonstrates a Kafka sync system using Rust, PostgreSQL, Kafka Conn
 - Rust (latest stable version)
 - Cargo
 - curl (for registering Kafka Connect connectors)
+- PostgreSQL client (psql)
 
 ## Setup and Installation
 
@@ -39,6 +40,19 @@ curl -X POST -H "Content-Type: application/json" \
 ```bash
 cargo run
 ```
+
+### 5. View Contact Tables
+To view and compare the contents of both source and sink contact tables, use the provided script:
+
+```bash
+./scripts/view_contacts.sh
+```
+
+This script will display:
+- Source contacts table (from the database on port 5432)
+- Sink contacts table (from the database on port 5433)
+
+Make sure the Docker containers are running before executing the script.
 
 ## System Architecture
 
