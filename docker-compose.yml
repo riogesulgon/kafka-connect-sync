@@ -1,3 +1,5 @@
+version: '3.8'
+
 networks:
   kafka-network:
     driver: bridge
@@ -144,7 +146,6 @@ services:
         echo "Creating sink connector..."
         curl -X POST http://kafka-connect:8083/connectors -H "Content-Type: application/json" -d @/etc/kafka-connect/connectors/postgres-sink-connector.json
         echo "Done!"
-        sleep infinity
     volumes:
       - ./connectors:/etc/kafka-connect/connectors
       - ./custom-plugins:/etc/kafka-connect/custom-plugins

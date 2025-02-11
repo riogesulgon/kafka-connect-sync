@@ -6,8 +6,9 @@
         "connection.url": "jdbc:postgresql://postgres-sink:5432/contacts_sink",
         "connection.user": "sinkuser",
         "connection.password": "sinkpassword",
-        "topics": "contacts.contacts",
-        "auto.create": false,
+        "topics": "contactscontacts",
+        "auto.create": true,
+        "auto.evolve": true,
         "insert.mode": "upsert",
         "pk.mode": "record_value",
         "pk.fields": "id",
@@ -16,4 +17,4 @@
         "value.converter": "io.confluent.connect.avro.AvroConverter",
         "value.converter.schema.registry.url": "http://schema-registry:8081"
     }
-} 
+}
