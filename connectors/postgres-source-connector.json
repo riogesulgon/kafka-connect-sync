@@ -1,21 +1,17 @@
 {
     "name": "postgres-source-connector",
     "config": {
-        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
         "tasks.max": "1",
-        "database.hostname": "postgres",
-        "database.port": "5432",
-        "database.user": "contactuser",
-        "database.password": "contactpassword",
-        "database.dbname": "contacts",
-        "database.server.name": "contacts-db",
-        "table.include.list": "public.contacts",
-        "plugin.name": "pgoutput",
+        "connection.url": "jdbc:postgresql://postgres:5432/contacts",
+        "connection.user": "contactuser",
+        "connection.password": "contactpassword",
+        "mode": "incrementing",
+        "incrementing.column.name": "id",
+        "table.whitelist": "contacts",
         "topic.prefix": "contacts",
         "key.converter": "org.apache.kafka.connect.storage.StringConverter",
         "value.converter": "io.confluent.connect.avro.AvroConverter",
-        "value.converter.schema.registry.url": "http://schema-registry:8081",
-        "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
-        "schema.history.internal.kafka.topic": "schema-changes.contacts"
+        "value.converter.schema.registry.url": "http://schema-registry:8081"
     }
 }

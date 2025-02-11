@@ -4,6 +4,7 @@ networks:
 
 volumes:
   postgres-data:
+  postgres-sink-data:
   kafka-data:
   zookeeper-data:
   zookeeper-log:
@@ -22,6 +23,20 @@ services:
       POSTGRES_PASSWORD: contactpassword
     ports:
       - "5432:5432"
+    networks:
+      - kafka-network
+
+  postgres-sink:
+    image: postgres:15-alpine
+    volumes:
+      - postgres-sink-data:/var/lib/postgresql/data
+      - ./init-db-sink:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_DB: contacts_sink
+      POSTGRES_USER: sinkuser
+      POSTGRES_PASSWORD: sinkpassword
+    ports:
+      - "5433:5432"
     networks:
       - kafka-network
 
@@ -100,40 +115,38 @@ services:
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/usr/share/filestream-connectors,/etc/kafka-connect/custom-plugins
     volumes:
       - kafka-connect-data:/var/lib/kafka-connect
       - ./connectors:/etc/kafka-connect/connectors
+      - ./custom-plugins:/etc/kafka-connect/custom-plugins
     networks:
       - kafka-network
 
-  postgres-connector:
+  connector-installer:
     image: confluentinc/cp-kafka-connect:7.4.1
     depends_on:
       - kafka-connect
       - postgres
-    volumes:
-      - ./connectors:/connectors
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
-      CONNECT_REST_ADVERTISED_HOST_NAME: postgres-connector
-      CONNECT_REST_PORT: 8083
-      CONNECT_GROUP_ID: postgres-connector-group
-      CONNECT_CONFIG_STORAGE_TOPIC: postgres-connector-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: postgres-connector-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: postgres-connector-status
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      - postgres-sink
     command:
       - /bin/bash
       - -c
       - |
-        confluent-hub install --no-prompt debezium/debezium-connector-postgres:2.1.1 || true
-        /etc/confluent/docker/run
+        echo "Installing connectors..."
+        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.7.4
+        echo "Copying connector plugins..."
+        cp -r /usr/share/confluent-hub-components/* /etc/kafka-connect/custom-plugins/
+        echo "Waiting for Kafka Connect to start..."
+        sleep 30
+        echo "Creating source connector..."
+        curl -X POST http://kafka-connect:8083/connectors -H "Content-Type: application/json" -d @/etc/kafka-connect/connectors/postgres-source-connector.json
+        echo "Creating sink connector..."
+        curl -X POST http://kafka-connect:8083/connectors -H "Content-Type: application/json" -d @/etc/kafka-connect/connectors/postgres-sink-connector.json
+        echo "Done!"
+        sleep infinity
+    volumes:
+      - ./connectors:/etc/kafka-connect/connectors
+      - ./custom-plugins:/etc/kafka-connect/custom-plugins
     networks:
       - kafka-network

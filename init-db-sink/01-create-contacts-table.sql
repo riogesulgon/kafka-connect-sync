@@ -22,9 +22,4 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_contacts_updated_at
     BEFORE UPDATE ON contacts
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create an initial sample contact
-INSERT INTO contacts (first_name, last_name, email, phone) 
-VALUES 
-    ('John', 'Doe', 'john.doe@example.com', '+1-555-123-4567');
+    EXECUTE FUNCTION update_updated_at_column(); 
